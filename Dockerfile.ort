@@ -1,0 +1,11 @@
+# Build a patched NuGet Inspector and place it over the version bundled with ORT.
+FROM mcr.microsoft.com/dotnet/sdk:6.0 AS inspector
+WORKDIR /source
+COPY src/nuget-inspector/ src/nuget-inspector/
+COPY NOTICE AUTHORS.rst mit.LICENSE apache-2.0.LICENSE CHANGELOG.rst README.rst ./
+RUN dotnet publish src/nuget-inspector/nuget-inspector.csproj \
+    -c Release -r linux-x64 -o /published --self-contained true
+
+FROM ghcr.io/oss-review-toolkit/ort:92.0.0@sha256:b756f9ae0b8d6b435012a1b7097d4e419d327029cd8daeb36c7f400af9b51d31
+LABEL org.opencontainers.image.source="https://github.com/GoSimulate/nuget-inspector"
+COPY --from=inspector --chown=ort:ort /published/ /opt/dotnet/bin/
